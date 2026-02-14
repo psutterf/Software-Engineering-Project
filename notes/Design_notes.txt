@@ -1,0 +1,155 @@
+
+
+---
+
+##############
+## Graphics ## 
+##############
+
+- Written using tkinker
+- event based engine 
+- splash_screen.py will be used to create graphical window and run game loop but the GUI.py will be responsible for tying together database and networking and handling user input 
+
+- Tkinter is only standard on windows and Mac but our Linux VM doesnt come with it 
+
+```
+sudo apt install python3-tk
+```
+
+```
+python3 -m tkinter        --- opens a test window to check
+```
+
+TODO:
+	- splash screen
+	- player entry screen 
+	- ^ will need GUI to talk to the database and enter players.
+	- Should be able to use the tab key to move from field to field
+	- After all players are entered, pressing the f3 key will move to the play action screen for the rest of the game
+
+
+
+############################
+## Virtual Machine/Debian ##
+############################
+
+- fuckass distro
+
+#####################
+## Database design ##
+#####################
+
+TODO: 
+	- Create function that will add player to database
+	- needs to be called by GUI when user interacts with it
+
+- uses **postgreSQL** found on virtual machine 
+
+*Helpful shortcuts*
+
+```
+psql photon             -- opens database
+
+\l                      -- list databases
+\dt                     -- list tables
+\d table                -- describe table
+SHOW data_directory;    -- show exact location
+
+```
+
+In order for python script to communicate to database need a PostgreSQL driver for Python 
+
+Most common: psycopg2
+
+```
+pip install psycopg2-binary
+```
+
+Pip downloads non-standard libraries from the python package index (PyPI)
+Pip is also not downloaded on Virtual machine so it will need to be included in install script 
+
+```
+pip3 --version    
+```
+
+```
+sudo apt install python3-pip
+```
+
+#############
+## Network ## 
+#############
+
+TODO: 
+set up sockets and broadcast 
+allow users to change networks
+GUI will need to take in input to change Broadcast Address
+
+- uses socket library (default library no download requried)
+
+- to find ports being used by processes $sudo ss -tulnp
+- tulnp = Tcp, Udp, listening sockets, Numeric ports, process
+
+- 0.0.0.0:PORT means its listening on all network interfaces; only relies on port 
+
+- UDP reciever bound with /*sock.bind(('', 5005))*/ ready to recieve broadcast traffic
+
+- appears as udp UNCONN 0 0 0.0.0.0:5005 (listening on port 5005)
+
+- 127.0.0.1 is local host meaning all traffic sent here gets routed back to the system
+
+- $ip addr   -- displays IP
+
+- inet 10.0.2.15/24 brd 10.0.2.255
+	- VMs IP address (at least mine) **10.0.2.15** subset mask /24 (CIDR notation)
+	- broadcast address **10.0.2.255**
+
+- My UDP broadcast should broadcast to 10.0.2.255 If I wish to have my test reciever on my VM 
+
+- a **broadcast** is when you dont know recievers IP or when multiple machines are needing to recieve packets (multiple lazer tag guns in our case). Broadcast never crosses routers. Only sends to devices on 10.0.2.0 subnet. for example Local Host 192.168.x.x cannot talk to VM 10.0.2.0. This is why switching networks is required 
+
+- VM uses NAT virtual networking meaning all VMs should have same subnet regardless of location (should be able to reuse reciever test code broadcasting to 10.0.2.255) 
+
+
+- **ports** : range from 0 – 65535
+	- 0–1023: reserved for core services (require root access)
+	- 1024–49151: registered ports (Held by known companies, non OS essential)
+	- 49152–65535: private ports (used for private projects)
+
+- sudo tcpdump -i lo -n udp port 7500 -X     --prints UDP traffic on port 7500 ; prints ascii and hex
+- sudo apt install tcpdump
+
+- will be used to test broadcast; lo stands for loopback interface meaning it only shows traffic on network 127.0.0.1 (local host)
+
+ **For our project specifically**
+
+- There will be two udp sockets  
+	- One to broadcast data (udp port 7500) Format will be int (id of player who got tagged)  
+    - One to receive data (udp port 7501) Format will be int:int (id of player transmitting:id of player tagged)
+- All network communication will be performed on a non routeable address (192.168.1.100)
+- No need to consider performance in the prototype
+
+
+####################
+## Install script ##
+####################
+
+- Since our code is tested on a fresh VM. install script will need to download python dependancies such as ptinker before executing our project
+
+#!/bin/bash
+
+echo "This script requires sudo privileges."
+
+# Ask for sudo upfront
+sudo -v
+
+echo "Updating package list..."
+sudo apt update
+
+echo "Installing system dependencies..."
+sudo apt install -y python3 python3-pip python3-tk
+
+echo "Installing Python dependencies..."
+pip3 install -r requirements.txt
+
+echo "Setup complete."
