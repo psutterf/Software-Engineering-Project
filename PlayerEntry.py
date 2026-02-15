@@ -1,4 +1,7 @@
 import tkinter as tk #importing tkinter to use as gui 
+from db import fetch_player_by_id, insert_player #importing from db python files to add players from this file
+from tkinter import simpledialog, messagebox
+
 
 class PlayerEntry: #player entry class
     def __init__(self): #runs when class player entry is called
@@ -21,6 +24,10 @@ class PlayerEntry: #player entry class
         #create box to hold RGteams
         self.holdTeamsRG = tk.Frame(self.window, bg="black", width=500, height=700) #creates a fream thatll hold everthing 
         self.holdTeamsRG.grid(row=1, column=0) #expand is if theres extraa room in the widget give it to this one 
+
+        #DB additions
+        self.red_rows = []
+        self.green_rows = []
 
         self.RGteams() #call RGteams to run everything below
         self.gameMode() 
@@ -64,10 +71,22 @@ class PlayerEntry: #player entry class
             RbtnTxt.grid(row=i+1, column=1,padx=2, pady=2, sticky='w')
             
             #two entry columns
-            entryTextR1 = tk.Entry(self.redLabel1, width=30) #first one
+            entryTextR1 = tk.Entry(self.redLabel1, width=30) #Player Id
             entryTextR1.grid(row=i+1, column=2,padx=2, pady=2, sticky='nsew')
-            entryTextR2 = tk.Entry(self.redLabel1, width=32)
-            entryTextR2.grid(row=i+1, column=3,padx=2, pady=2, sticky='nsew') #second 1
+            entryTextR2 = tk.Entry(self.redLabel1, width=32) #Codename
+            entryTextR2.grid(row=i+1, column=3,padx=2, pady=2, sticky='nsew') 
+
+            #Add the entered player to the grid
+            self.red_rows.append({
+                "pid": entryTextR1,
+                "code": entryTextR2
+            })
+
+            #pass the entered player into the handle_player_id method to be inserted into the database
+            entryTextR1.bind(
+                "<Return>",
+                lambda e, idx=i: self.handle_player_id("red", idx)
+            )
         
         #green widgets green team 2 columns that go to 19 
         for i in range(20):
@@ -80,10 +99,22 @@ class PlayerEntry: #player entry class
             GbtnTxt.grid(row=i+1, column=1,padx=2, pady=2, sticky='w')
             
             #two entry columns
-            entryTextG1 = tk.Entry(self.greenLabel2, width=32) #first one
+            entryTextG1 = tk.Entry(self.greenLabel2, width=32) #Player Id
             entryTextG1.grid(row=i+1, column=2,padx=2, pady=2, sticky='nsew')
-            entryTextG2 = tk.Entry(self.greenLabel2, width=32)
-            entryTextG2.grid(row=i+1, column=3,padx=2, pady=2, sticky='nsew') #second one
+            entryTextG2 = tk.Entry(self.greenLabel2, width=32) #Codename
+            entryTextG2.grid(row=i+1, column=3,padx=2, pady=2, sticky='nsew') 
+
+            #Add the entered player to the grid
+            self.green_rows.append({
+                "pid": entryTextG1,
+                "code": entryTextG2
+            })
+
+            #pass the entered player into the handle_player_id method to be inserted into the database
+            entryTextG1.bind(
+                "<Return>",
+                lambda e, idx=i: self.handle_player_id("green", idx)
+            )
     
     #game mode text under red and green team (seperate from the RGteams but touching it like blocks together)
     def gameMode(self):
@@ -134,6 +165,35 @@ class PlayerEntry: #player entry class
         self.DIFrame.grid(row=4, column=0, sticky="ew")
         self.DILabel = tk.Label(self.DIFrame, background="#ACACAC", text="<Del> to Delete Player, <Ins> to Manually Insert, or edit codename", fg="black", font=('Times New Roman', 10)) #text in frame thats under Red and green
         self.DILabel.pack(pady=1)
+
+    #Databse logic method, will take the player data (id and codename) and insert them into database or update existing player 
+    def handle_player_id(self, team, index):
+        #Checks which team is passed in
+        rows = self.red_rows if team == "red" else self.green_rows
+        pid_text = rows[index]["pid"].get().strip()
+
+        #Making sure player id is integer
+        if not pid_text.isdigit():
+            messagebox.showerror("Invalid", "Player ID must be an integer")
+            return
+
+        #Takes the id from the index on the row of the team grid 
+        player_id = int(pid_text)
+        row = fetch_player_by_id(player_id)
+
+        #if row exists, it will autofill the codename from the database
+        if row:
+            rows[index]["code"].delete(0, "end")
+            rows[index]["code"].insert(0, row["codename"])
+        else: #If row doesnt exist, player will be prompted to enter a codename
+            codename = simpledialog.askstring(
+                "New Player",
+                f"No player with ID {player_id}. Enter codename:"
+            )
+            if codename:
+                insert_player(player_id, codename)
+                rows[index]["code"].delete(0, "end")
+                rows[index]["code"].insert(0, codename)
 
 screen = PlayerEntry()
 
