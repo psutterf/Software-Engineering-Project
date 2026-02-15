@@ -1,6 +1,7 @@
 import tkinter as tk #importing tkinter to use as gui 
 from db import fetch_player_by_id, insert_player #importing from db python files to add players from this file
 from tkinter import simpledialog, messagebox
+from network import LazerTagNetwork
 
 
 class PlayerEntry: #player entry class
@@ -29,6 +30,7 @@ class PlayerEntry: #player entry class
         self.red_rows = []
         self.green_rows = []
 
+        self.network = LazerTagNetwork()
         self.RGteams() #call RGteams to run everything below
         self.gameMode() 
         self.fButtons()
@@ -138,7 +140,7 @@ class PlayerEntry: #player entry class
         self.f1 = tk.Button(self.fButtonFrame, text="F1\nEdit\nGame", width=8, height=3, justify="center")
         self.f1.grid(row=0, column=0, padx=4)
         
-        self.f2 = tk.Button(self.fButtonFrame, text="F2\nGame\nParameters", width=8, height=3)
+        self.f2 = tk.Button(self.fButtonFrame, text="F2\nGame\nParameters", width=8, height=3, command=self.networkChange)
         self.f2.grid(row=0, column=1, padx=4)
         
         self.f3 = tk.Button(self.fButtonFrame, text="F3\nStart\nGame", width=8, height=3)
@@ -192,9 +194,16 @@ class PlayerEntry: #player entry class
             )
             if codename:
                 insert_player(player_id, codename)
+                self.network.broadcast_id(player_id) #broadcast equipment/player ID
                 rows[index]["code"].delete(0, "end")
                 rows[index]["code"].insert(0, codename)
                 
+
+    def networkChange(self):
+        newIP = simpledialog.askstring("Network", "Enter network IP:")
+        if newIP:
+            self.network.change_network(newIP)
+
 if __name__ == "__main__":
     screen = PlayerEntry()
 
