@@ -1,6 +1,8 @@
 from tkinter import *
 from PIL import Image, ImageTk
 
+from PlayerEntry import PlayerEntry
+
 # create splash screen object
 splash_root = Tk()
 splash_root.title("Photon")
@@ -21,7 +23,7 @@ def main():
     splash_root.destroy()
 
     # call function to open player entry screen
-    # function_call()
+    playerScreen = PlayerEntry()
 
 # display splash screen for 5 seconds, then call main
 splash_root.after(5000, main)

@@ -135,8 +135,6 @@ class PlayerEntry: #player entry class
         self.DILabel = tk.Label(self.DIFrame, background="#ACACAC", text="<Del> to Delete Player, <Ins> to Manually Insert, or edit codename", fg="black", font=('Times New Roman', 10)) #text in frame thats under Red and green
         self.DILabel.pack(pady=1)
 
-screen = PlayerEntry()
-
 #=====================================================================JAYDENS NOTES=====================================================================#
 #do tk. to see everything that i could possibly use from tk
 #create window 
