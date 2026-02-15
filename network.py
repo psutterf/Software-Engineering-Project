@@ -25,12 +25,12 @@ class LazerTagNetwork:
 # TODO: Delete later used for testing and implimentation example
 
 def main():
-    network = LazerTagNetwork()  #default is local host and port 7500
+    network = LazerTagNetwork()  #default network is local host and port 7500
 
     player_id = 12345 
     print(f"player tag : {player_id}")
 
-    network.broadcast_id(player_id)  # open second terminal and run command sudo tcpdump -i lo -n udp port 7500 -X this is how we see traffic
+    network.broadcast_id(player_id)  # open second terminal and run command "sudo tcpdump -i lo -n udp port 7500 -X" should see packet in Hex and decimal
     print("packet succefully sent")
 
     player_id = "message being sent wowowowowow"
