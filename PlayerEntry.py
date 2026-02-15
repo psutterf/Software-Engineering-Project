@@ -194,8 +194,9 @@ class PlayerEntry: #player entry class
                 insert_player(player_id, codename)
                 rows[index]["code"].delete(0, "end")
                 rows[index]["code"].insert(0, codename)
-
-screen = PlayerEntry()
+                
+if __name__ == "__main__":
+    screen = PlayerEntry()
 
 #=====================================================================JAYDENS NOTES=====================================================================#
 #do tk. to see everything that i could possibly use from tk
