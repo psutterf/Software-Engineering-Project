@@ -2,6 +2,7 @@ import tkinter as tk #importing tkinter to use as gui
 from db import fetch_player_by_id, insert_player #importing from db python files to add players from this file
 from tkinter import simpledialog, messagebox
 from network import LazerTagNetwork
+from playerAction import GameActionScreen
 
 
 class PlayerEntry: #player entry class
@@ -143,7 +144,7 @@ class PlayerEntry: #player entry class
         self.f2 = tk.Button(self.fButtonFrame, text="F2\nGame\nParameters", width=8, height=3, command=self.networkChange)
         self.f2.grid(row=0, column=1, padx=4)
         
-        self.f3 = tk.Button(self.fButtonFrame, text="F3\nStart\nGame", width=8, height=3)
+        self.f3 = tk.Button(self.fButtonFrame, text="F3\nStart\nGame", width=8, height=3, command=self.startGame)
         self.f3.grid(row=0, column=2, padx=4)
         
         self.f5 = tk.Button(self.fButtonFrame, text="F5\nPreEntered\nGames", width=8, height=3)
@@ -203,6 +204,35 @@ class PlayerEntry: #player entry class
         newIP = simpledialog.askstring("Network", "Enter network IP:")
         if newIP:
             self.network.change_network(newIP)
+
+    def startGame(self):
+
+        red_players = []   # stores the players that get sent to action screen
+        green_players = []
+
+        # grab red team players
+        for row in self.red_rows:
+            pid = row["pid"].get()
+            name = row["code"].get()
+
+            if pid and name:  # -----------------> adds only if both player ID and name are not null 
+                red_players.append((pid, name))
+
+        # grab green team players
+        for row in self.green_rows:
+            pid = row["pid"].get()
+            name = row["code"].get()
+
+            if pid and name:
+                green_players.append((pid, name))
+
+        # hide entry screen
+        self.window.destroy()
+
+        #TODO add countdown timer here 
+
+        #  open the game action screen
+        GameActionScreen(red_players, green_players)
 
 if __name__ == "__main__":
     screen = PlayerEntry()
