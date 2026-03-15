@@ -1,5 +1,5 @@
 import tkinter as tk #importing tkinter to use as gui 
-from db import fetch_player_by_id, insert_player #importing from db python files to add players from this file
+from db import fetch_player_by_id, fetch_player_by_hardware_id, insert_player, ensure_players_schema #importing from db python files to add players from this file
 from tkinter import simpledialog, messagebox
 from network import LazerTagNetwork
 
@@ -29,6 +29,7 @@ class PlayerEntry: #player entry class
         #DB additions
         self.red_rows = []
         self.green_rows = []
+        ensure_players_schema() #Adds the hardware_id column to local database
 
         self.network = LazerTagNetwork()
         self.RGteams() #call RGteams to run everything below
@@ -187,14 +188,59 @@ class PlayerEntry: #player entry class
         if row:
             rows[index]["code"].delete(0, "end")
             rows[index]["code"].insert(0, row["codename"])
-        else: #If row doesnt exist, player will be prompted to enter a codename
+        else: #If row doesnt exist, player will be prompted to enter a codename and hardware id
             codename = simpledialog.askstring(
                 "New Player",
                 f"No player with ID {player_id}. Enter codename:"
             )
+
+            #codename must have a value
+            if codename is None:
+                return
+            
+            hardware_text = simpledialog.askstring(
+                "Hardware ID",
+                f"Enter hardware ID for player {player_id}:"
+            )
+            
+            #Hardware ID must have a value
+            if hardware_text is None:
+                return
+            
+            #Making sure the text entered is an integer
+            hardware_text = hardware_text.strip()
+            if not hardware_text.isdigit():
+                messagebox.showerror("Invalid", "Hardware ID must be an integer.")
+                return
+
+            #Convert to int for easier DB insertion
+            hardware_id = int(hardware_text)
+
+            #Check to see if hardware id is a duplicate
+            existing_hardware = fetch_player_by_hardware_id(hardware_id)
+
+            #If duplicate, let the user know and show what player it is assigned to
+            if existing_hardware:
+                messagebox.showerror(
+                    "Invalid",
+                    f"Hardware ID {hardware_id} is already assigned to "
+                    f"player ID {existing_hardware['id']} ({existing_hardware['codename']})."
+                )
+                return
+
+            #Confirming if hardware should be odd or even based on the team they picked
+            if team == "red" and hardware_id % 2 == 0:
+                messagebox.showerror("Invalid", "Red team hardware IDs must be ODD.")
+                return
+
+            if team == "green" and hardware_id % 2 != 0:
+                messagebox.showerror("Invalid", "Green team hardware IDs must be EVEN.")
+                return
+            
+            #insertion and broadcast
             if codename:
-                insert_player(player_id, codename)
-                self.network.broadcast_id(player_id) #broadcast equipment/player ID
+                insert_player(player_id, codename, hardware_id)
+                self.network.broadcast_id(hardware_id) #broadcast hardware_id
                 rows[index]["code"].delete(0, "end")
                 rows[index]["code"].insert(0, codename)
                 
