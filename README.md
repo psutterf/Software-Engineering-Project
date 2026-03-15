@@ -21,3 +21,9 @@ $bash setup.bash
 ```
 
 another script is found to verify install and check if VM is ready
+
+
+Python Depandancies used: 
+-   Pillow; Python Imaging Library(PIL)        main.py
+-   psycopg2                                   db.py
+-   tkinter                                    playerAction.py, PlayerEntry.py 
