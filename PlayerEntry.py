@@ -35,6 +35,7 @@ class PlayerEntry: #player entry class
         self.gameMode() 
         self.fButtons()
         self.DelandIns()
+        self.window.bind("<F12>", self.clearALLPlayers) #bind f12 button to key
         
         self.window.mainloop() #gets the screen to show (must be below everything)
         
@@ -158,9 +159,20 @@ class PlayerEntry: #player entry class
         self.f10 = tk.Button(self.fButtonFrame, text="F10\nFlick\nSync", width=8, height=3)
         self.f10.grid(row=0, column=6, padx=4)
         
-        self.f12 = tk.Button(self.fButtonFrame, text="F12\nClear\nGame", width=8, height=3)
+        self.f12 = tk.Button(self.fButtonFrame, text="F12\nClear\nGame", width=8, height=3, command=self.clearALLPlayers)
         self.f12.grid(row=0, column=7, padx=4)
-        
+    
+    #clear all players
+    def clearALLPlayers(self, event=None):
+        #clear red team
+        for row in self.red_rows:
+            row["pid"].delete(0, "end")
+            row["code"].delete(0, "end")
+        #clear green team
+        for row in self.green_rows:
+            row["pid"].delete(0, "end")
+            row["code"].delete(0, "end")
+            
     ##text under fs stuff on the very bottom of the widnow screen
     def DelandIns(self):
         self.DIFrame = tk.Frame(self.window, background="#ACACAC") #frame for grids
