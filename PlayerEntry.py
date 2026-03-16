@@ -1,6 +1,7 @@
 import tkinter as tk #importing tkinter to use as gui 
 from db import fetch_player_by_id, insert_player #importing from db python files to add players from this file
 from tkinter import simpledialog, messagebox
+from PIL import Image, ImageTk
 from network import LazerTagNetwork
 from playerAction import GameActionScreen
 
@@ -205,7 +206,78 @@ class PlayerEntry: #player entry class
         if newIP:
             self.network.change_network(newIP)
 
+    # function for the play action countdown
+    def countdown(self, green_players, red_players):
+
+        width, height = 1200, 800
+
+        countdown_window = tk.Tk()
+        countdown_window.title("Game starting soon!")
+        countdown_window.geometry(f"{width}x{height}")
+        
+        canvas = tk.Canvas(countdown_window, width=width, height=height, bg="black")
+        canvas.pack(fill="both", expand=True)
+
+        # draw debug text so we know canvas works
+        canvas.create_text(
+            600, 100,
+            text="COUNTDOWN WINDOW CREATED",
+            fill="red",
+            font=("Arial", 40)
+        )
+
+        countdown_window.update()
+
+        bg_img = Image.open("countdown_images/background.png")
+        bg_img = bg_img.resize((width, height))
+        bg_photo = ImageTk.PhotoImage(bg_img)
+
+        canvas.create_image(0, 0, anchor="nw", image=bg_photo)
+
+        canvas.bg_photo = bg_photo
+
+        # load numbered images
+        num_images = []
+        for i in range(30, 0, -1):
+            img = Image.open(f"countdown_images/{i}.png")
+            img = img.resize((504, 200))
+            num_images.append(ImageTk.PhotoImage(img))
+
+        canvas.num_images = num_images
+
+        index = 0
+        num_id = None
+
+        def update():
+            nonlocal index, num_id
+
+            if index < len(num_images):
+
+                if num_id:
+                    canvas.delete(num_id)
+            
+                num_id = canvas.create_image(
+                    602,
+                    467,
+                    image=num_images[index],
+                    anchor="center"
+                )
+
+                index += 1
+
+                countdown_window.after(1000, update)
+
+            else:
+                countdown_window.destroy()
+                GameActionScreen(red_players, green_players)
+
+        countdown_window.after(1000, update)
+        countdown_window.mainloop()
+
+
     def startGame(self):
+
+        # import from countdown.py countdown function 
 
         red_players = []   # stores the players that get sent to action screen
         green_players = []
@@ -230,9 +302,10 @@ class PlayerEntry: #player entry class
         self.window.destroy()
 
         #TODO add countdown timer here 
+        self.countdown(red_players, green_players)
 
         #  open the game action screen
-        GameActionScreen(red_players, green_players)
+        # GameActionScreen(red_players, green_players)
 
 if __name__ == "__main__":
     screen = PlayerEntry()
