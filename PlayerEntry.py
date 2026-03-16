@@ -276,16 +276,6 @@ class PlayerEntry: #player entry class
         canvas = tk.Canvas(countdown_window, width=width, height=height, bg="black")
         canvas.pack(fill="both", expand=True)
 
-        # draw debug text so we know canvas works
-        canvas.create_text(
-            600, 100,
-            text="COUNTDOWN WINDOW CREATED",
-            fill="red",
-            font=("Arial", 40)
-        )
-
-        countdown_window.update()
-
         bg_img = Image.open("countdown_images/background.png")
         bg_img = bg_img.resize((width, height))
         bg_photo = ImageTk.PhotoImage(bg_img)
