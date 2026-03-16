@@ -265,7 +265,7 @@ class PlayerEntry: #player entry class
             self.network.change_network(newIP)
 
     # function for the play action countdown
-    def countdown(self, green_players, red_players):
+    def countdown(self, red_players, green_players):
 
         width, height = 1200, 800
 
