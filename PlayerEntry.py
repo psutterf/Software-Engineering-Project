@@ -344,7 +344,7 @@ class PlayerEntry: #player entry class
                 index += 1
 
                 seconds_left = len(num_images) - index
-                if seconds_left == 18 and not music_started:
+                if seconds_left == 17 and not music_started:
                     self.audio.play_random_music()
                     music_started = True
 
