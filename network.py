@@ -28,6 +28,12 @@ class LazerTagNetwork:
         message = self.START_CODE.encode()
         self.send_socket.sendto(message, (self.network_ip, self.send_port))
 
+    def send_ack(self):   # sends acknowledgement to traffic generator to keep prompting it 
+        self.send_socket.sendto(b"200", (self.network_ip, self.send_port))
+
+    def send_end_code(self):
+        self.send_socket.sendto(b"221", (self.network_ip, self.send_port))
+
     def change_network(self, new_ip: str):
         self.network_ip = new_ip
 

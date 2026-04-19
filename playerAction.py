@@ -41,13 +41,15 @@ class GameActionScreen:
         self.player_lookup = {}
         self.player_team = {}
 
-        for pid, name in red_players:
-            self.player_lookup[str(pid)] = name
-            self.player_team[str(pid)] = "red"
+        for player in red_players:
+            hardware_id = str(player["hardware_id"])
+            self.player_lookup[hardware_id] = player["name"]
+            self.player_team[hardware_id] = "red"
 
-        for pid, name in green_players:
-            self.player_lookup[str(pid)] = name
-            self.player_team[str(pid)] = "green"
+        for player in green_players:
+            hardware_id = str(player["hardware_id"])
+            self.player_lookup[hardware_id] = player["name"]
+            self.player_team[hardware_id] = "green"
 
 
         # -------------------
@@ -96,7 +98,8 @@ class GameActionScreen:
         green_players_frame.columnconfigure(1, weight=0)
 
         # Show red players
-        for i, (pid, name) in enumerate(red_players):      #takes in a tuple of id and player name 
+        for i, player in enumerate(red_players):
+            name = player["name"]      
 
             self.red_scores[name] = 0  #initialize scores to 0 
 
@@ -127,7 +130,9 @@ class GameActionScreen:
             self.red_base_icons[name] = icon_label
 
         # Show green players
-        for i, (pid, name) in enumerate(green_players):
+        for i, player in enumerate(green_players):
+            name = player["name"]
+
 
             self.green_scores[name] = 0
 
@@ -219,9 +224,9 @@ class GameActionScreen:
         #       Timer
         # -------------------
 
-        self.timer_label = tk.Label(    # displays initial 5 min timer
+        self.timer_label = tk.Label(    # displays initial 6 min timer
             self.window,
-            text="Time Remaining: 5:00",
+            text="Time Remaining: 6:00",
             fg="white",
             bg="black",
             font=("Arial", 26)
@@ -249,6 +254,10 @@ class GameActionScreen:
         if self.time_left > 0:
             self.time_left -= 1
             self.window.after(1000, self.update_timer)  # waits a second then calls function again 
+        else:
+            self.running = False
+            self.network.send_end_code()
+            self.add_event("Game ended")
 
     def give_base_icon(self, player_name):
         if player_name in self.red_base_icons: #check red team
@@ -284,6 +293,11 @@ class GameActionScreen:
         event_text = self.parse_event(message)
         if event_text:
             self.add_event(event_text)
+
+        self.network.send_ack()  # sends a response back to traffic generator so it continues 
+
+        if "hit teammate" in event_text.lower(): #friendly fire needs a second response 
+            self.network.send_ack()
 
     def parse_event(self, message):
         message = message.strip()
@@ -333,21 +347,17 @@ class GameActionScreen:
 if __name__ == "__main__":
 
     red_players = [
-        (1, "Jaybobjr"),
-        (2, "Caderade"),
-        (3, "P-Power")
+        {"pid": 1, "name": "Jaybobjr", "hardware_id": 11, "team": "red"},
+        {"pid": 2, "name": "Caderade", "hardware_id": 13, "team": "red"},
+        {"pid": 3, "name": "P-Power", "hardware_id": 15, "team": "red"}
     ]
 
     green_players = [
-        (4, "Gart"),
-        (5, "Opposition #1"),
-        (6, "Opposition #2")
+        {"pid": 4, "name": "Gart", "hardware_id": 20, "team": "green"},
+        {"pid": 5, "name": "Opposition #1", "hardware_id": 22, "team": "green"},
+        {"pid": 6, "name": "Opposition #2", "hardware_id": 24, "team": "green"}
     ]
 
     screen = GameActionScreen(red_players, green_players)
-
-    screen.add_event("Gart hit Jaybobjr")
-    screen.add_event("P-dawg hit Opp #2")
-    screen.add_event("Caderade hit the base")
 
     screen.window.mainloop()
