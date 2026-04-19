@@ -1,4 +1,5 @@
 import tkinter as tk
+from PIL import Image, ImageTk
 
 class GameActionScreen:
 
@@ -12,12 +13,18 @@ class GameActionScreen:
 
         self.window.update_idletasks()  #resizes window immediately; fixing issue where timer was clipped out
 
+        self.base_icon_img = ImageTk.PhotoImage(
+            Image.open("baseicon.jpg").resize((20,20))
+        )
+        
         self.red_score_labels = {}     
         self.green_score_labels = {}
 
         self.red_scores = {}           #stores players scores to be updated and summed later 
         self.green_scores = {}
 
+        self.red_base_icons = {}
+        self.green_base_icons = {}
         # -------------------
         #    Team Frame
         # -------------------
@@ -85,7 +92,14 @@ class GameActionScreen:
             )
             score_label.grid(row=i, column=1, sticky="e", padx=10, pady=2)
 
+            icon_label = tk.Label(
+                red_players_frame,
+                bg="black"
+            )
+            icon_label.grid(row=i, column=2, padx=5)
+            
             self.red_score_labels[name] = score_label
+            self.red_base_icons[name] = icon_label
 
         # Show green players
         for i, (pid, name) in enumerate(green_players):
@@ -109,7 +123,13 @@ class GameActionScreen:
             )
             score_label.grid(row=i, column=1, sticky="e", padx=10, pady=2)
 
+            icon_label = tk.Label(
+                green_players_frame,
+                bg="black"
+            )
+            icon_label.grid(row=i, column=2, padx=5)
             self.green_score_labels[name] = score_label
+            self.green_base_icons[name] = icon_label
 
         
         # total scores red team
@@ -197,11 +217,26 @@ class GameActionScreen:
             self.time_left -= 1
             self.window.after(1000, self.update_timer)  # waits a second then calls function again 
 
+    def give_base_icon(self, player_name):
+        if player_name in self.red_base_icons: #check red team
+            label = self.red_base_icons[player_name]
+            label.config(image=self.base_icon_img)
+            label.image = self.base_icon_img 
+        
+        elif player_name in self.green_base_icons: #check green team
+            label = self.green_base_icons[player_name]
+            label.config(image=self.base_icon_img)
+            label.image = self.base_icon_img 
+        
     def add_event(self, text):
         self.log.config(state="normal")       #toggles to enable editing temporarily 
         self.log.insert("end", text + "\n")
         self.log.see("end")
         self.log.config(state="disabled")    #adds text line and then toggles back off 
+        if "hit the base" in text.lower():
+            player_name = text.lower().replace("hit the base", "").strip()
+            player_name = player_name.title() #for names that are capitalized
+            self.give_base_icon(player_name)
 
 # --------------
 #      Test
