@@ -4,10 +4,13 @@ from tkinter import simpledialog, messagebox
 from PIL import Image, ImageTk
 from network import LazerTagNetwork
 from playerAction import GameActionScreen
-
+from AudioManager import get_audio
 
 class PlayerEntry: #player entry class
     def __init__(self): #runs when class player entry is called
+
+        #intialize audio
+        self.audio = get_audio()
 
         #create window 
         self.window = tk.Tk() #makes window 
@@ -334,6 +337,7 @@ class PlayerEntry: #player entry class
 
         def update():
             nonlocal index, num_id
+            music_started = False
 
             if index < len(num_images):
 
@@ -348,6 +352,11 @@ class PlayerEntry: #player entry class
                 )
 
                 index += 1
+
+                seconds_left = len(num_images) - index
+                if seconds_left == 18 and not music_started:
+                    self.audio.play_random_music()
+                    music_started = True
 
                 countdown_window.after(1000, update)
 
