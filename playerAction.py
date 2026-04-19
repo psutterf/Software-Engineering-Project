@@ -227,7 +227,7 @@ class GameActionScreen:
             font=("Arial", 26)
         )
         self.timer_label.pack(anchor="e", padx=20, pady=10) #anchor e right-aligns timer
-        self.time_left = 300     # 300 seconds = 5 min
+        self.time_left = 360     # 360 seconds = 6 min
         self.update_timer()      # calls to deincriment timer
 
 

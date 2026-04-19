@@ -17,13 +17,13 @@ def get_conn():
 
 
 def fetch_player_by_id(player_id: int):
-    sql = "SELECT id, codename, hardware_id FROM players WHERE id = %s"
+    sql = "SELECT id, codename FROM players WHERE id = %s"
     with get_conn() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(sql, (player_id,))
         return cur.fetchone()
 
 # Will also be used to update player codename if it already exists
-def insert_player(player_id: int, codename: str, hardware_id: int):
+def insert_player(player_id: int, codename: str):
     with get_conn() as conn, conn.cursor() as cur:
         
         #Check if Id already exisits
@@ -32,32 +32,16 @@ def insert_player(player_id: int, codename: str, hardware_id: int):
 
         if exists:
             cur.execute(
-                "UPDATE players SET codename = %s, hardware_id = %s WHERE id = %s",
-                (codename, hardware_id, player_id),
+                "UPDATE players SET codename = %s WHERE id = %s",
+                (codename, player_id),
             )
         else:
             cur.execute(
-                "INSERT INTO players (id, codename, hardware_id) VALUES (%s, %s, %s)",
-                (player_id, codename, hardware_id),
+                "INSERT INTO players (id, codename) VALUES (%s, %s)",
+                (player_id, codename),
             )
 
         conn.commit()
-
-#Creates a new column in the database for hardware_id 
-#ensures that wherever the program is ran, the database will be correctly updated
-def ensure_players_schema():
-    with get_conn() as conn, conn.cursor() as cur:
-        cur.execute("""
-            ALTER TABLE players
-            ADD COLUMN IF NOT EXISTS hardware_id INTEGER
-        """)
-        conn.commit()
-
-#Used to make sure there are no duplicate hardware_ids
-def fetch_player_by_hardware_id(hardware_id: int):
-    sql = "SELECT id, codename, hardware_id FROM players WHERE hardware_id = %s"
-    with get_conn() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
-        cur.execute(sql, (hardware_id,))
-        return cur.fetchone()
+        
 
 
