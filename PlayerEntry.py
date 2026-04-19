@@ -409,9 +409,6 @@ class PlayerEntry: #player entry class
         #TODO add countdown timer here 
         self.countdown(red_players, green_players)
 
-        #  open the game action screen
-        # GameActionScreen(red_players, green_players)
-
 if __name__ == "__main__":
     screen = PlayerEntry()
 

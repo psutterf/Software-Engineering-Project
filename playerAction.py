@@ -71,7 +71,9 @@ class GameActionScreen:
         green_players_frame.columnconfigure(1, weight=0)
 
         # Show red players
-        for i, (pid, name) in enumerate(red_players):      #takes in a tuple of id and player name 
+        for i, player in enumerate(red_players):      #takes in a tuple of id and player name 
+            pid = player["pid"]
+            name = player["name"]
 
             self.red_scores[name] = 0  #initialize scores to 0 
 
@@ -102,8 +104,10 @@ class GameActionScreen:
             self.red_base_icons[name] = icon_label
 
         # Show green players
-        for i, (pid, name) in enumerate(green_players):
-
+        for i, player in enumerate(green_players):      #takes in a tuple of id and player name 
+            pid = player["pid"]
+            name = player["name"]
+            
             self.green_scores[name] = 0
 
             tk.Label(
