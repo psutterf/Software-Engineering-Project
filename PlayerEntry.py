@@ -85,7 +85,9 @@ class PlayerEntry: #player entry class
             #Add the entered player to the grid
             self.red_rows.append({
                 "pid": entryTextR1,
-                "code": entryTextR2
+                "code": entryTextR2,
+                "hardware_id": None,
+                "team": "red"
             })
 
             #pass the entered player into the handle_player_id method to be inserted into the database
@@ -113,7 +115,9 @@ class PlayerEntry: #player entry class
             #Add the entered player to the grid
             self.green_rows.append({
                 "pid": entryTextG1,
-                "code": entryTextG2
+                "code": entryTextG2,
+                "hardware_id": None,
+                "team": "green"
             })
 
             #pass the entered player into the handle_player_id method to be inserted into the database
@@ -171,10 +175,13 @@ class PlayerEntry: #player entry class
         for row in self.red_rows:
             row["pid"].delete(0, "end")
             row["code"].delete(0, "end")
+            row["hardware_id"] = None
+        
         #clear green team
         for row in self.green_rows:
             row["pid"].delete(0, "end")
             row["code"].delete(0, "end")
+            row["hardware_id"] = None
             
     ##text under fs stuff on the very bottom of the widnow screen
     def DelandIns(self):
@@ -189,6 +196,7 @@ class PlayerEntry: #player entry class
         rows = self.red_rows if team == "red" else self.green_rows
         rows[index]["pid"].delete(0, "end")
         rows[index]["code"].delete(0, "end")
+        rows[index]["hardware_id"] = None
 
     #Helper for hardware id (NO LONG STORED IN DB)
     #Prompt for a hardware ID, validate integer and team odd/even rules, then return it
@@ -251,6 +259,7 @@ class PlayerEntry: #player entry class
                 self.clear_player_row(team, index)
                 return
 
+            rows[index]["hardware_id"] = hardware_id
             self.network.broadcast_id(hardware_id)
 
         else: #If row doesnt exist, player will be prompted to enter a codename and hardware id
@@ -281,6 +290,7 @@ class PlayerEntry: #player entry class
 
             rows[index]["code"].delete(0, "end")
             rows[index]["code"].insert(0, codename)
+            rows[index]["hardware_id"] = hardware_id
 
             self.network.broadcast_id(hardware_id)
                 
@@ -360,17 +370,29 @@ class PlayerEntry: #player entry class
         for row in self.red_rows:
             pid = row["pid"].get()
             name = row["code"].get()
+            hardware_id = row["hardware_id"]
 
-            if pid and name:  # -----------------> adds only if both player ID and name are not null 
-                red_players.append((pid, name))
+            if pid and name and hardware_id:  # -----------------> adds only if both player ID, name, AND hardware id are not null 
+                red_players.append({
+                    "pid": int(pid),
+                    "name": name,
+                    "hardware_id": hardware_id,
+                    "team": "red"
+                })
 
         # grab green team players
         for row in self.green_rows:
             pid = row["pid"].get()
             name = row["code"].get()
+            hardware_id = row["hardware_id"]
 
-            if pid and name:
-                green_players.append((pid, name))
+            if pid and name and hardware_id:
+                green_players.append({
+                    "pid": int(pid),
+                    "name": name,
+                    "hardware_id": hardware_id,
+                    "team": "green"
+                })
 
         # hide entry screen
         self.window.destroy()
