@@ -1,9 +1,13 @@
 import tkinter as tk
 from PIL import Image, ImageTk
+import threading
+from network import LazerTagNetwork
 
 class GameActionScreen:
 
     def __init__(self, red_players, green_players):
+
+        print("GameActionScreen __init__ called")
 
         self.window = tk.Tk()
         self.window.title("Game Action Screen")
@@ -25,6 +29,27 @@ class GameActionScreen:
 
         self.red_base_icons = {}
         self.green_base_icons = {}
+
+        # create network object
+        self.network = LazerTagNetwork()
+        self.network.send_start_code()           # traffic generator needs to be running before game starts so that it can recieve code 
+
+        
+        self.running = True
+
+        # lookup tables for players 
+        self.player_lookup = {}
+        self.player_team = {}
+
+        for pid, name in red_players:
+            self.player_lookup[str(pid)] = name
+            self.player_team[str(pid)] = "red"
+
+        for pid, name in green_players:
+            self.player_lookup[str(pid)] = name
+            self.player_team[str(pid)] = "green"
+
+
         # -------------------
         #    Team Frame
         # -------------------
@@ -205,6 +230,14 @@ class GameActionScreen:
         self.time_left = 300     # 300 seconds = 5 min
         self.update_timer()      # calls to deincriment timer
 
+
+        print("created")
+
+
+        # start listener thread
+        self.listener_thread = threading.Thread(target=self.listen_for_packets, daemon=True)
+        self.listener_thread.start()
+
     def update_timer(self):
         minutes = self.time_left // 60
         seconds = self.time_left % 60
@@ -237,6 +270,62 @@ class GameActionScreen:
             player_name = text.lower().replace("hit the base", "").strip()
             player_name = player_name.title() #for names that are capitalized
             self.give_base_icon(player_name)
+
+    def listen_for_packets(self):
+        while self.running:
+            try:
+                data, addr = self.network.receive_data()
+                self.window.after(0, self.handle_packet, data)
+            except Exception as e:
+                print("Receive error:", e)
+                break
+
+    def handle_packet(self, message):
+        event_text = self.parse_event(message)
+        if event_text:
+            self.add_event(event_text)
+
+    def parse_event(self, message):
+        message = message.strip()
+
+        if ":" not in message:
+            return f"Unknown message: {message}"
+
+        attacker_id, target_id = message.split(":", 1)
+
+        attacker_name = self.player_lookup.get(attacker_id, f"Unknown({attacker_id})")
+        attacker_team = self.player_team.get(attacker_id, "unknown")
+
+        # base hit
+        if target_id == "43" or target_id == "53":
+            self.update_score(attacker_name, 100)
+            self.give_base_icon(attacker_name)
+            return f"{attacker_name} hit the base"
+
+        target_name = self.player_lookup.get(target_id, f"Unknown({target_id})")
+        target_team = self.player_team.get(target_id, "unknown")
+
+        # friendly fire
+        if attacker_team == target_team and attacker_team != "unknown":
+            self.update_score(attacker_name, -10)
+            self.update_score(target_name, -10)
+            return f"{attacker_name} hit teammate {target_name}"
+
+        # enemy hit
+        self.update_score(attacker_name, 10)
+        return f"{attacker_name} hit {target_name}"
+
+    def update_score(self, player_name, points):
+        if player_name in self.red_scores:
+            self.red_scores[player_name] += points
+            self.red_score_labels[player_name].config(text=str(self.red_scores[player_name]))
+            self.red_total_label.config(text=str(sum(self.red_scores.values())))
+
+        elif player_name in self.green_scores:
+            self.green_scores[player_name] += points
+            self.green_score_labels[player_name].config(text=str(self.green_scores[player_name]))
+            self.green_total_label.config(text=str(sum(self.green_scores.values())))
+
 
 # --------------
 #      Test
