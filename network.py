@@ -17,6 +17,7 @@ class LazerTagNetwork:
         self.send_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1) #enables socket for broadcasting
 
         self.receive_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.receive_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #enables reuse of addr for this socket
         self.receive_socket.bind(("0.0.0.0", self.recieve_port))
 
 
