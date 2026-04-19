@@ -1,5 +1,5 @@
 import tkinter as tk #importing tkinter to use as gui 
-from db import fetch_player_by_id, fetch_player_by_hardware_id, insert_player, ensure_players_schema #importing from db python files to add players from this file
+from db import fetch_player_by_id, insert_player #importing from db python files to add players from this file
 from tkinter import simpledialog, messagebox
 from PIL import Image, ImageTk
 from network import LazerTagNetwork
@@ -34,7 +34,7 @@ class PlayerEntry: #player entry class
         #DB additions
         self.red_rows = []
         self.green_rows = []
-        ensure_players_schema() #Adds the hardware_id column to local database
+
 
         self.network = LazerTagNetwork()
         self.RGteams() #call RGteams to run everything below
@@ -186,15 +186,57 @@ class PlayerEntry: #player entry class
         self.DILabel = tk.Label(self.DIFrame, background="#ACACAC", text="<Del> to Delete Player, <Ins> to Manually Insert, or edit codename", fg="black", font=('Times New Roman', 10)) #text in frame thats under Red and green
         self.DILabel.pack(pady=1)
 
+    #Helper for Hardware id
+    #Clear one player row when entry is invalid or cancelled
+    def clear_player_row(self, team, index):
+        rows = self.red_rows if team == "red" else self.green_rows
+        rows[index]["pid"].delete(0, "end")
+        rows[index]["code"].delete(0, "end")
+
+    #Helper for hardware id (NO LONG STORED IN DB)
+    #Prompt for a hardware ID, validate integer and team odd/even rules, then return it
+    def prompt_hardware_id(self, team, player_id):
+        while True:
+            hardware_text = simpledialog.askstring(
+                "Hardware ID",
+                f"Enter hardware ID (Red = ODD, Green = EVEN) for player {player_id}:"
+            )
+
+            if hardware_text is None:
+                return None
+
+            hardware_text = hardware_text.strip()
+
+            if not hardware_text:
+                messagebox.showerror("Invalid", "Hardware ID cannot be blank.")
+                continue
+
+            if not hardware_text.isdigit():
+                messagebox.showerror("Invalid", "Hardware ID must be an integer.")
+                continue
+
+            hardware_id = int(hardware_text)
+
+            if team == "red" and hardware_id % 2 == 0:
+                messagebox.showerror("Invalid", "Red team hardware IDs must be ODD.")
+                continue
+
+            if team == "green" and hardware_id % 2 != 0:
+                messagebox.showerror("Invalid", "Green team hardware IDs must be EVEN.")
+                continue
+
+            return hardware_id
+
     #Databse logic method, will take the player data (id and codename) and insert them into database or update existing player 
     def handle_player_id(self, team, index):
         #Checks which team is passed in
         rows = self.red_rows if team == "red" else self.green_rows
         pid_text = rows[index]["pid"].get().strip()
 
-        #Making sure player id is integer
+        #Making sure player id is integer, if invalid then clear the player
         if not pid_text.isdigit():
             messagebox.showerror("Invalid", "Player ID must be an integer")
+            self.clear_player_row(team, index)
             return
 
         #Takes the id from the index on the row of the team grid 
@@ -205,6 +247,15 @@ class PlayerEntry: #player entry class
         if row:
             rows[index]["code"].delete(0, "end")
             rows[index]["code"].insert(0, row["codename"])
+
+            #Prompt user for hardware id and send it through the network
+            hardware_id = self.prompt_hardware_id(team, player_id)
+            if hardware_id is None:
+                self.clear_player_row(team, index)
+                return
+
+            self.network.broadcast_id(hardware_id)
+
         else: #If row doesnt exist, player will be prompted to enter a codename and hardware id
             codename = simpledialog.askstring(
                 "New Player",
@@ -213,53 +264,28 @@ class PlayerEntry: #player entry class
 
             #codename must have a value
             if codename is None:
+                self.clear_player_row(team, index)
                 return
             
-            hardware_text = simpledialog.askstring(
-                "Hardware ID",
-                f"Enter hardware ID for player {player_id}:"
-            )
-            
-            #Hardware ID must have a value
-            if hardware_text is None:
-                return
-            
-            #Making sure the text entered is an integer
-            hardware_text = hardware_text.strip()
-            if not hardware_text.isdigit():
-                messagebox.showerror("Invalid", "Hardware ID must be an integer.")
+            codename = codename.strip()
+            if not codename:
+                messagebox.showerror("Invalid", "Codename cannot be blank.")
+                self.clear_player_row(team, index)
                 return
 
-            #Convert to int for easier DB insertion
-            hardware_id = int(hardware_text)
-
-            #Check to see if hardware id is a duplicate
-            existing_hardware = fetch_player_by_hardware_id(hardware_id)
-
-            #If duplicate, let the user know and show what player it is assigned to
-            if existing_hardware:
-                messagebox.showerror(
-                    "Invalid",
-                    f"Hardware ID {hardware_id} is already assigned to "
-                    f"player ID {existing_hardware['id']} ({existing_hardware['codename']})."
-                )
+            #Prompt for hardware id and send to network
+            hardware_id = self.prompt_hardware_id(team, player_id)
+            if hardware_id is None:
+                self.clear_player_row(team, index)
                 return
 
-            #Confirming if hardware should be odd or even based on the team they picked
-            if team == "red" and hardware_id % 2 == 0:
-                messagebox.showerror("Invalid", "Red team hardware IDs must be ODD.")
-                return
+            #Insert new player into db
+            insert_player(player_id, codename)
 
-            if team == "green" and hardware_id % 2 != 0:
-                messagebox.showerror("Invalid", "Green team hardware IDs must be EVEN.")
-                return
-            
-            #insertion and broadcast
-            if codename:
-                insert_player(player_id, codename, hardware_id)
-                self.network.broadcast_id(hardware_id) #broadcast hardware_id
-                rows[index]["code"].delete(0, "end")
-                rows[index]["code"].insert(0, codename)
+            rows[index]["code"].delete(0, "end")
+            rows[index]["code"].insert(0, codename)
+
+            self.network.broadcast_id(hardware_id)
                 
 
     def networkChange(self):
