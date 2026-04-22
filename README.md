@@ -22,6 +22,11 @@ $bash setup.bash
 
 another script is found to verify install and check if VM is ready
 
+Once finished installing activate the virtual environment for the program:
+```
+$source venv/bin/activate
+```
+
 
 Python Depandancies used: 
 -   Pillow; Python Imaging Library(PIL)        main.py
